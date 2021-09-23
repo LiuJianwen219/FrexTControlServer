@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: frext-socket-svc
+spec:
+  selector:
+    app: frext-socket
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 8040
+      targetPort: 8040
+      nodePort: 30030
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frext-socket
+  labels:
+    app: frext-socket
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frext-socket
+  template:
+    metadata:
+      labels:
+        app: frext-socket
+    spec:
+      serviceAccountName:
+        frext
+      containers:
+      - name: frext-socket
+        image: socket-test:v0.0.0
+        command: ["/bin/sh"]
+        args: ["-c", "while true; do echo hello; sleep 10;done"]
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8040
+        volumeMounts:
+        - mountPath: /code
+          name: frext-job
+      volumes:
+        - name: frext-job
+          hostPath:
+            path: /mnt/hgfs/0Web
+            type: Directory
