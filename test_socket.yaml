@@ -10,7 +10,7 @@ spec:
     - protocol: TCP
       port: 8040
       targetPort: 8040
-      nodePort: 30030
+      nodePort: 30040
 
 ---
 apiVersion: apps/v1
