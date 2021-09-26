@@ -74,12 +74,14 @@ def message_received(client, server, message):
         DTUmap[client['id']] = None
         data = {'type': AUTH_SUCC_DEVICE, 'content': {'info': "OK"}}
         server.send_message(client, json.dumps(data))
+        print("DEVICE")
 
     elif dict_['type'] == AUTH_USER:
         user[client['id']] = client
         UTDmap[client['id']] = None
         data = {'type': AUTH_SUCC_USER, 'content': {'info': "OK"}}
         server.send_message(client, json.dumps(data))
+        print("USER")
 
     elif dict_['type'] == AUTH_RABBIT:
         # global rabbitMQClient
@@ -91,6 +93,7 @@ def message_received(client, server, message):
 
         data = {'type': AUTH_RABBIT_SUCC, 'content': {'info': "OK"}}
         server.send_message(client, json.dumps(data))
+        print("RABBIT")
         # else:
         #    data = {'type': AUTH_RABBIT_FAIL, 'content': {'info': "重复"}}
         #    server.send_message(client, json.dumps(data))
