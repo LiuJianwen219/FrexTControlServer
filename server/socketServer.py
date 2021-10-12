@@ -1,4 +1,5 @@
 import json
+import threading
 import time
 import random
 
@@ -128,15 +129,13 @@ def message_received(client, server, message):
                 sendUTD(data)
                 return
 
+            rDevice = None
             nReady, nBusy, nError = countDevice()
-
             if nReady > 0:
-                acquire = randomGetOne()
+                rDevice = safeCountAndGetOne()
 
-                devices[acquire].writeState(1, time.time())
-
-                UTDmap[client['id']] = acquire
-
+            if rDevice:
+                UTDmap[client['id']] = rDevice
                 if dict_['using'] == 'exp':
                     data = {'type': ACQUIRE_DEVICE_FOR_EXP, 'content': {'Uid': client['id']}}
                     sendUTD(data)
@@ -145,7 +144,6 @@ def message_received(client, server, message):
                     data = {'type': ACQUIRE_DEVICE_FOR_TEST, 'content': {'Uid': client['id']}}
                     sendUTD(data)
                     return
-
             else:
                 data = {'type': ACQUIRE_FAIL, 'content': {'info': "all devices busy"}}
                 server.send_message(client, json.dumps(data))
@@ -260,7 +258,18 @@ def randomGetOne():
         if tmp[b].readState() == 0:
             return b
         del tmp[b]  # 删除已抽取的键值对
-    return -1
+    return None
+
+
+lock = threading.Lock()
+def safeCountAndGetOne():
+    lock.acquire()
+    rDevice = randomGetOne()
+    if rDevice:
+        devices[rDevice].writeState(1, time.time())
+    lock.release()
+    return rDevice
+
 
 
 def countDevice():
