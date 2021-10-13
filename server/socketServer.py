@@ -71,7 +71,7 @@ def message_received(client, server, message):
     dict_ = json.loads(message)
 
     if dict_['type'] == AUTH_DEVICE:
-        devices[client['id']] = Device(dict_['index'])
+        devices[client['id']] = Device(dict_['index'], dict_['device_tags'])
         DTUmap[client['id']] = None
         data = {'type': AUTH_SUCC_DEVICE, 'content': {'info': "OK"}}
         server.send_message(client, json.dumps(data))
@@ -115,7 +115,7 @@ def message_received(client, server, message):
 
     elif dict_['type'] == ACT_SYNC:
         if client['id'] in user:
-            nReady, nBusy, nError = countDevice()
+            nReady, nBusy, nError = countDevice(dict_['using'])
 
             data = {'type': SYNC_DEVICE, 'content': {'nReady': nReady, 'nBusy': nBusy, 'nError': nError}}
             server.send_message(client, json.dumps(data))
@@ -130,22 +130,22 @@ def message_received(client, server, message):
                 return
 
             rDevice = None
-            nReady, nBusy, nError = countDevice()
+            nReady, nBusy, nError = countDevice(dict_['using'])
             if nReady > 0:
-                rDevice = safeCountAndGetOne()
+                rDevice = safeCountAndGetOne(dict_['using'])
 
             if rDevice:
                 UTDmap[client['id']] = rDevice
-                if dict_['using'] == 'exp':
+                if dict_['using'] == 'EXPERIMENT':
                     data = {'type': ACQUIRE_DEVICE_FOR_EXP, 'content': {'Uid': client['id']}}
                     sendUTD(data)
                     return
-                elif dict_['using'] == 'test':
+                elif dict_['using'] == 'TEST':
                     data = {'type': ACQUIRE_DEVICE_FOR_TEST, 'content': {'Uid': client['id']}}
                     sendUTD(data)
                     return
             else:
-                data = {'type': ACQUIRE_FAIL, 'content': {'info': "all devices busy"}}
+                data = {'type': ACQUIRE_FAIL, 'content': {'info': "all devices busy, please wait and refresh"}}
                 server.send_message(client, json.dumps(data))
         else:
             data = {'type': AUTH_USER_FILE, 'content': {'info': "登录超时，请重新登录"}}
@@ -250,36 +250,35 @@ def message_received(client, server, message):
         #     server.send_message(DTU_sock[client['id']]['sock'], message)
 
 
-def randomGetOne():
+def randomGetOne(tag):
     tmp = devices
     for i in range(0, len(devices)):
         a = random.sample(tmp.keys(), 1)  # 随机一个字典中的key，第二个参数为限制个数
         b = a[0]
-        if tmp[b].readState() == 0:
+        if tmp[b].readState() == 0 and tmp[b].isMatchTags(tag):
             return b
         del tmp[b]  # 删除已抽取的键值对
     return None
 
 
 lock = threading.Lock()
-def safeCountAndGetOne():
+def safeCountAndGetOne(tag):
     lock.acquire()
-    rDevice = randomGetOne()
+    rDevice = randomGetOne(tag)
     if rDevice:
         devices[rDevice].writeState(1, time.time())
     lock.release()
     return rDevice
 
 
-
-def countDevice():
+def countDevice(tag):
     nReady = 0
     nBusy = 0
     nError = 0
     for item in devices:
-        if devices[item].readState() == 0:
+        if devices[item].readState() == 0 and devices[item].isMatchTags(tag):
             nReady += 1
-        elif devices[item].readState() == 1:
+        elif devices[item].readState() == 1 or not devices[item].isMatchTags(tag):
             nBusy += 1
         else:
             nError += 1

@@ -4,11 +4,15 @@ from server.constant import *
 
 class Device:
 
-    def __init__(self, id):
+    def __init__(self, id, tags):
         self.id = id
         self.syncTime = time.time()
         self.state = -1
         self.client = None
+        if not tags:
+            self.tags = ["TESTING"]
+        else:
+            self.tags = tags
         # self.user = None
 
     def getId(self):
@@ -61,3 +65,6 @@ class Device:
             'client': self.client,
             # 'user': self.user
         }
+
+    def isMatchTags(self, tag):
+        return tag in self.tags
