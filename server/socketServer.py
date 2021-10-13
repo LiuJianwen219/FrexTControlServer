@@ -251,8 +251,8 @@ def message_received(client, server, message):
 
 
 def randomGetOne(tag):
-    tmp = devices
-    for i in range(0, len(devices)):
+    tmp = devices.copy()
+    for i in range(0, len(tmp)):
         a = random.sample(tmp.keys(), 1)  # 随机一个字典中的key，第二个参数为限制个数
         b = a[0]
         if tmp[b].readState() == 0 and tmp[b].isMatchTags(tag):
