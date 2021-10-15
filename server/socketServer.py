@@ -148,7 +148,7 @@ def message_received(client, server, message):
                 data = {'type': ACQUIRE_FAIL, 'content': {'info': "all devices busy, please wait and refresh"}}
                 server.send_message(client, json.dumps(data))
         else:
-            data = {'type': AUTH_USER_FILE, 'content': {'info': "登录超时，请重新登录"}}
+            data = {'type': AUTH_FAIL_USER, 'content': {'info': "登录超时，请重新登录"}}
             server.send_message(client, json.dumps(data))
 
     elif dict_['type'] == ACT_SYNC_SW_BTN:
