@@ -60,9 +60,10 @@ class Device:
     def toDict(self):
         return {
             'id': self.id,
-            'syncTime': self.syncTime,
+            'syncTime': self.syncTime.__str__(),
             'state': self.state,
             'client': self.client,
+            'tag': self.tags,
             # 'user': self.user
         }
 

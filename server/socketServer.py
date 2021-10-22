@@ -63,6 +63,7 @@ def message_received(client, server, message):
     # print("Client(%d) said: %s" % (client['id'], json.loads(message)['type']))
 
     def sendUTD(data):
+        print(client['id'])
         server.send_message(devices[UTDmap[client['id']]].getClient(), json.dumps(data))
 
     def sendDTU(data):
@@ -238,6 +239,21 @@ def message_received(client, server, message):
     elif dict_['type'] == INIT_FILE_UPLOAD_SUCC:
         sendDTU(dict_)
 
+    elif dict_['type'] == AUTH_ADMIN:
+        user[client['id']] = client
+        UTDmap[client['id']] = None
+        data = {'type': AUTH_ADMIN_SUCC, 'content': {'info': "OK"}}
+        server.send_message(client, json.dumps(data))
+        print("ADMIN")
+    elif dict_['type'] == ACT_SYNC_DETAIL:
+        if client['id'] in user:
+            data = {'type': ACT_SYNC_DETAIL_SUCC, 'content': {'deviceDetail': count_device_detail()}}
+            server.send_message(client, json.dumps(data))
+        else:
+            data = {'type': AUTH_ADMIN_FAIL, 'content': {'info': "登录超时，请重新登录"}}
+            server.send_message(client, json.dumps(data))
+
+
     else:
         pass
         # if dict_['type'] == UTD_SW_DOWN:
@@ -283,6 +299,15 @@ def countDevice(tag):
         else:
             nError += 1
     return nReady, nBusy, nError
+
+
+def count_device_detail():
+    device_detail = []
+    for item in devices:
+        device_detail.append(devices[item].toDict())
+    print(json.dumps(device_detail))
+    return device_detail
+
 
 # # 读取devices的状态
 # def upDateDevice():
