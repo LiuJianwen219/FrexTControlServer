@@ -1,12 +1,21 @@
-import time
+import datetime
+
 from server.constant import *
+
+
+def time_now():
+    return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+
+
+def time_before(seconds):
+    return (datetime.datetime.now() - datetime.timedelta(seconds=seconds)).strftime('%Y-%m-%d %H:%M:%S.%f')
 
 
 class Device:
 
     def __init__(self, id, tags):
         self.id = id
-        self.syncTime = time.time()
+        self.syncTime = time_now()
         self.state = -1
         self.client = None
         if not tags:
@@ -19,8 +28,8 @@ class Device:
         return self.id
 
     def readState(self):
-        curTime = time.time()
-        if self.syncTime + SYS_DELAY > curTime:
+        curTime = time_before(150)
+        if self.syncTime > curTime:
             return self.state
         # print(self.syncTime)
         # print(curTime)
@@ -45,12 +54,12 @@ class Device:
     #         self.user = u
 
     def getClient(self):
-        curTime = time.time()
+        curTime = time_now()
         if self.syncTime <= curTime:
             return self.client
 
     # def getUser(self):
-    #     curTime = time.time()
+    #     curTime = time_now()
     #     if self.syncTime < curTime:
     #         return self.user
 
@@ -62,7 +71,7 @@ class Device:
             'id': self.id,
             'syncTime': self.syncTime.__str__(),
             'state': self.state,
-            'client': self.client,
+            'clientId': self.client['id'],
             'tag': self.tags,
             # 'user': self.user
         }

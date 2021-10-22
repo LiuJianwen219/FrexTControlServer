@@ -1,3 +1,4 @@
+import datetime
 import json
 import threading
 import time
@@ -35,9 +36,9 @@ def client_left(client, server):
         print("user(%d) disconnected" % client['id'])
         if UTDmap[client['id']]:  # 用户非正常退出
             data = {'type': ACT_RELEASE,
-                    'content': {'device': devices[UTDmap[client['id']]].getId(), 'time': time.time()}}
+                    'content': {'device': devices[UTDmap[client['id']]].getId(), 'time': time_now()}}
             server.send_message(devices[UTDmap[client['id']]].getClient(), json.dumps(data))
-            devices[UTDmap[client['id']]].writeState(0, time.time())
+            devices[UTDmap[client['id']]].writeState(0, time_now())
             DTUmap[UTDmap[client['id']]] = None
             UTDmap[client['id']] = None
         user.pop(client['id'])
@@ -46,9 +47,9 @@ def client_left(client, server):
     if client['id'] in devices:  # 设备非正常退出
         if DTUmap[client['id']]:
             print("device(%d) disconnected" % client['id'])
-            data = {'type': ACT_RELEASE, 'content': {'device': devices[client['id']].getId(), 'time': time.time()}}
+            data = {'type': ACT_RELEASE, 'content': {'device': devices[client['id']].getId(), 'time': time_now()}}
             server.send_message(user[DTUmap[client['id']]], json.dumps(data))
-            devices[client['id']].writeState(-1, time.time())
+            devices[client['id']].writeState(-1, time_now())
             UTDmap[DTUmap[client['id']]] = None
             DTUmap[client['id']] = None
         devices.pop(client['id'])
@@ -63,7 +64,6 @@ def message_received(client, server, message):
     # print("Client(%d) said: %s" % (client['id'], json.loads(message)['type']))
 
     def sendUTD(data):
-        print(client['id'])
         server.send_message(devices[UTDmap[client['id']]].getClient(), json.dumps(data))
 
     def sendDTU(data):
@@ -108,7 +108,7 @@ def message_received(client, server, message):
         global tempCount
         if tempCount % 5 == 0:
             for key in devices:
-                print(devices[key].readState())
+                print(devices[key].getId(), devices[key].getTime(), devices[key].readState())
         tempCount += 1
         # print('beat...')
         data = {'type': UPDATE_DEVICE_SUCC, 'content': {'info': "OK"}}
@@ -168,10 +168,10 @@ def message_received(client, server, message):
         sendDTU(data)
     elif dict_['type'] == ACT_RELEASE:
         if UTDmap[client['id']]:
-            data = {'type': ACT_RELEASE, 'content': {'device': dict_['content']['device'], 'time': time.time()}}
+            data = {'type': ACT_RELEASE, 'content': {'device': dict_['content']['device'], 'time': time_now()}}
             sendUTD(data)
 
-            devices[UTDmap[client['id']]].writeState(0, time.time())
+            devices[UTDmap[client['id']]].writeState(0, time_now())
             DTUmap[UTDmap[client['id']]] = None
             UTDmap[client['id']] = None
 
@@ -282,7 +282,7 @@ def safeCountAndGetOne(tag):
     lock.acquire()
     rDevice = randomGetOne(tag)
     if rDevice:
-        devices[rDevice].writeState(1, time.time())
+        devices[rDevice].writeState(1, time_now())
     lock.release()
     return rDevice
 
@@ -309,6 +309,10 @@ def count_device_detail():
     return device_detail
 
 
+def time_now():
+    return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+
+
 # # 读取devices的状态
 # def upDateDevice():
 #     devices_state.clear()
@@ -319,7 +323,7 @@ def count_device_detail():
 #         }
 #         devices_state.append(device)
 #
-#     curtime = time.time()
+#     curtime = time_now()
 #     with open("./device.info", "r+") as f:
 #         mm = mmap.mmap(fileno=f.fileno(), length=0)
 #         for i in range(deviceAll):
